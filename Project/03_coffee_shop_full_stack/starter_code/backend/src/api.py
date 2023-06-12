@@ -1,8 +1,15 @@
 import os
+import sys
 from flask import Flask, request, jsonify, abort
 from sqlalchemy import exc
 import json
 from flask_cors import CORS
+
+
+
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
@@ -12,7 +19,7 @@ setup_db(app)
 CORS(app)
 
 '''
-@TODO uncomment the following line to initialize the datbase
+@TODO uncomment the following line to initialize the database
 !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
 !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
 !! Running this funciton will add one

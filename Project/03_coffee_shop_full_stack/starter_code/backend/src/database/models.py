@@ -20,7 +20,7 @@ def setup_db(app):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
-
+    print('some app')
 
 '''
 db_drop_and_create_all()
