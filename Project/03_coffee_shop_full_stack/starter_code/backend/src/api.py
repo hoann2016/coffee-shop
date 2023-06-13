@@ -8,8 +8,8 @@ from flask_cors import CORS
 
 
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
+# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
@@ -35,7 +35,9 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
-
+@app.route("/drinks")
+def get_drinks():
+    return list(map(lambda x: x.short(),Drink.query.all()))
 
 '''
 @TODO implement endpoint
@@ -45,7 +47,14 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drinks} where drinks is the list of drinks
         or appropriate status code indicating reason for failure
 '''
-
+@app.route("/drinks-detail")
+@require_auth("get:drinks-detail")
+def get_drink_detail(jwt):
+    try:
+        drinks_result =  list(map(lambda x: x.long(),Drink.query.all()))
+    except:
+        abort(422)
+    return jsonify(success= True,drink = drinks_result)
 
 '''
 @TODO implement endpoint
@@ -56,8 +65,25 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the newly created drink
         or appropriate status code indicating reason for failure
 '''
+@app.route("/drinks", methods = ["POST"])
+@require_auth("post:drinks")
+def add_drink(jwt):   
+    drink_req = request.get_json()
+    if drink_req is None:
+        abort(400)
+    try:
+        recipe = drink_req.get("recipe")
+        if isinstance(recipe, dict):
+            recipe = [recipe]
+        elif not isinstance(recipe, dict):
+            abort(422)
+        drink_result = Drink(tile = drink_req.get("title"), recipe = json.dumps(recipe))
+        drink_result.insert()
+    except:
+        abort(422)
+    return jsonify(success= True,drinks = [drink_result.long()])
 
-
+     
 '''
 @TODO implement endpoint
     PATCH /drinks/<id>
@@ -69,8 +95,28 @@ CORS(app)
     returns status code 200 and json {"success": True, "drinks": drink} where drink an array containing only the updated drink
         or appropriate status code indicating reason for failure
 '''
-
-
+@app.route("/drinks/<int:drink_id>", methods = ["PATCH"])
+@require_auth("patch:drinks")
+def edit_drink(jwt, drink_id):
+    drink_req = request.get_json()
+    drink_original = Drink.query.get(drink_id)
+    
+    if drink_req is None:
+        abort(400)
+        
+    if drink_original is None:
+        abort(404)
+    try:
+        drink_original.title = drink_req.get("title")
+        recipe = drink_req.get("recipe")
+        if isinstance(recipe, dict):
+            recipe = [recipe]
+        if not isinstance(recipe, list):
+            drink_original.recipe = json.dumps()
+        drink_original.update()
+    except:
+        abort(422)        
+    return jsonify(success= True,drinks = [drink_original.long()])
 '''
 @TODO implement endpoint
     DELETE /drinks/<id>
@@ -81,6 +127,17 @@ CORS(app)
     returns status code 200 and json {"success": True, "delete": id} where id is the id of the deleted record
         or appropriate status code indicating reason for failure
 '''
+@app.route("/drinks/<int:drink_id>", methods = ["DELETE"])
+@require_auth("patch:drinks")
+def remove_drink(jwt,drink_id):   
+    drink_original = Drink.query.get(drink_id)
+    if drink_original is None:
+        abort(404)
+    try:
+        drink_original.delete()
+    except:
+        abort(422)        
+    return jsonify(success= True,deleted = drink_id)
 
 
 # Error Handling
@@ -96,6 +153,22 @@ def unprocessable(error):
         "error": 422,
         "message": "unprocessable"
     }), 422
+    
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({
+        "success": False,
+        "error": 400,
+        "message": "bad request"
+    }), 400
+    
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "success": False,
+        "error": 404,
+        "message": "resource not found"
+    }), 404
 
 
 '''
