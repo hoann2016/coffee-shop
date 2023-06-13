@@ -48,7 +48,7 @@ def get_drinks():
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks-detail")
-@require_auth("get:drinks-detail")
+@requires_auth("get:drinks-detail")
 def get_drink_detail(jwt):
     try:
         drinks_result =  list(map(lambda x: x.long(),Drink.query.all()))
@@ -66,7 +66,7 @@ def get_drink_detail(jwt):
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks", methods = ["POST"])
-@require_auth("post:drinks")
+@requires_auth("post:drinks")
 def add_drink(jwt):   
     drink_req = request.get_json()
     if drink_req is None:
@@ -96,7 +96,7 @@ def add_drink(jwt):
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks/<int:drink_id>", methods = ["PATCH"])
-@require_auth("patch:drinks")
+@requires_auth("patch:drinks")
 def edit_drink(jwt, drink_id):
     drink_req = request.get_json()
     drink_original = Drink.query.get(drink_id)
@@ -128,7 +128,7 @@ def edit_drink(jwt, drink_id):
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks/<int:drink_id>", methods = ["DELETE"])
-@require_auth("patch:drinks")
+@requires_auth("patch:drinks")
 def remove_drink(jwt,drink_id):   
     drink_original = Drink.query.get(drink_id)
     if drink_original is None:
