@@ -1,13 +1,14 @@
 import json
+import os
 from flask import abort, request, _request_ctx_stack
 from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = "dev-u86jlsolu6wvhfdo.us.auth0.com"
+AUTH0_DOMAIN = os.getenv("JWT_TOKEN", "dev-u86jlsolu6wvhfdo.us.auth0.com")
 ALGORITHMS = ["RS256"]
-API_AUDIENCE = "drink"
+API_AUDIENCE = os.getenv("API_AUDIENCE", "drink")
 
 ## AuthError Exception
 """
@@ -69,17 +70,23 @@ def get_token_auth_header():
 
 
 def check_permissions(permission, payload):
-    if "permissions" not in payload:
-        raise AuthError(
-            {"code": "invalid_payload", "description": "Invalid payload"},
-            400,
-        )
-    if permission not in payload["permissions"]:
+    try:
+        if "permissions" not in payload:
+            raise AuthError(
+                {"code": "invalid_payload", "description": "Invalid payload"},
+                400,
+            )
+        if permission not in payload["permissions"]:
+            raise AuthError(
+                {"code": "unauthorize", "description": "Unauthorize"},
+                401,
+            )
+        return True
+    except Exception:
         raise AuthError(
             {"code": "unauthorize", "description": "Unauthorize"},
             401,
         )
-    return True
 
 
 """
@@ -176,9 +183,9 @@ def requires_auth(permission=""):
                 token = get_token_auth_header()
                 payload = verify_decode_jwt(token)
                 check_permissions(permission, payload)
-                return f(payload, *args, **kwargs)
             except Exception as e:
                 abort(401)
+            return f(payload, *args, **kwargs)
 
         return wrapper
 

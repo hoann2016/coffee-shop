@@ -35,7 +35,7 @@ CORS(app)
 @app.route("/drinks")
 def get_drinks():
     return jsonify(
-        success=True, drinks=list(map(lambda x: x.short(), Drink.query.all()))
+        {"success": True, "drinks": list(map(lambda x: x.short(), Drink.query.all()))}
     )
 
 
@@ -56,7 +56,7 @@ def get_drink_detail(jwt):
         drinks_result = list(map(lambda x: x.long(), Drink.query.all()))
     except:
         abort(422)
-    return jsonify(success=True, drinks=drinks_result)
+    return jsonify({"success": True, "drinks": drinks_result})
 
 
 """
@@ -86,7 +86,7 @@ def add_drink(jwt):
         drink_result.insert()
     except Exception as error:
         abort(422)
-    return jsonify(success=True, drinks=[drink_result.long()])
+    return jsonify({"success": True, "drinks": [drink_result.long()]})
 
 
 """
@@ -123,7 +123,7 @@ def edit_drink(jwt, drink_id):
         drink_original.update()
     except:
         abort(422)
-    return jsonify(success=True, drinks=[drink_original.long()])
+    return jsonify({"success": True, "drinks": [drink_original.long()]})
 
 
 """
@@ -148,7 +148,7 @@ def remove_drink(jwt, drink_id):
         drink_original.delete()
     except:
         abort(422)
-    return jsonify(success=True, deleted=drink_id)
+    return jsonify({"success": True, "deleted": drink_id})
 
 
 # Error Handling
